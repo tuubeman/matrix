@@ -1,0 +1,659 @@
+<html>
+	<head>
+		<script src="js/jquery/jquery-2.0.3.min.js"></script>
+		<script src="ajs/ractive/ractive.js"></script>
+		 <script src='http://cdn.ractivejs.org/latest/ractive.js'></script> 
+		<script src="js/ractive/Ractive-events-tap.js"></script>
+		<script src="js/ractive/Ractive-events-keys.js"></script>
+		<script src="js/ractive/Ractive-transitions-fade.js"></script>
+		
+		<link href="css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+		<link href="css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+		
+		<style>
+			.pointer {cursor:pointer;}
+			textarea {border:0px;}
+		</style>
+	</head>
+	<body>
+	<script id="cmls_app" type="text/ractive">
+hallo welt
+		<div class="container">
+			<div class="row">
+				<div class="col-md-8">
+				{{#allow.addCol}}
+				<span class="pull-right"><input type="text" value="{{newColLabel}}"/> <a on-tap="addCol"><i class="fa fa-plus"></i></a></span>
+				{{/}}				
+				
+				<table class="table table-striped table-bordered table-condensed" >
+				<tbody>
+					<tr>
+						<th ></th>
+						{{#xaxis:xlabel}}
+							<th on-dblclick='editRowLabel:xlabel' on-mouseenter="colIn" on-mouseleave="colOut" >
+								<div style="position:relative;padding:0px;margin:0px;">
+									<textarea value="{{.}}" style="width:80px;height:1.2em;" on-mousedown="textareaResize"></textarea>
+									{{width}}
+								{{^edit.xaxis[xlabel]}}  {{/}}
+								{{#edit.xaxis[xlabel]}}
+									<div intro="fade" style="background:#f9f9f9;position:absolute;display:inline-block;top:-35px;left:0px;z-index:999;width:100%;height:30px;">
+										<div style="padding:5px;">
+											<a on-tap="removeCol:{{xlabel}}"><i class="fa fa-trash pointer"></i></a>
+											<a><i class="fa fa-arrows-h pointer"></i></a>
+											<a><i on-tap="insertCol" class="fa fa-plus pointer"></i></a>
+											<select style="font-size:0.5em;"><option>boolean</option><option>number</option><option>string</option><option>object</option><option>date</option></select>
+										<div>
+									</div>
+								{{/}}
+								</div>
+							
+							</th>
+						{{/}}
+
+					</tr>
+				{{#yaxis:m}}
+				{{^yhide[m]}}
+					<tr >
+						<td on-dblclick='editRowLabel:m' on-mouseenter="rowIn" on-mouseleave="rowOut">
+							<div style="position:relative;">
+								<div style="margin-left:{{yindent[m].length*20}}px;">
+									<textarea  id="text-{{m}}"  style="height:1.6em;width:80px;" oon-blur='submit' value="{{yaxis[m]}}"></textarea>{{^edit.yaxis[m]}} {{/}}
+								</div>
+							{{#edit.yaxis[m]}}
+								<div intro='fade' style="position:absolute;left:-105px;top:-0px;width:100px;height:100%;background:#f9f9f9;z-index:999;">
+								<div style="padding:5px;">
+									<a on-tap="outdentRow:{{m}}"><i class="fa fa-angle-double-left pointer"></i></a>							
+									<a on-tap="indentRow:{{m}}"><i class="fa fa-angle-double-right pointer"></i></a> 
+									<a on-tap="removeRow:{{m}}"><i class="fa fa-trash pointer"></i></a>
+									<a><i class="fa fa-arrows-v"></i></a>
+									<a on-tap="insertRow:{{m}}"><i class="fa fa-plus pointer"></i></a>
+									{{#ycollapsed[m]}}
+									<a on-tap="unfoldRows:{{m}}"><i class="fa fa-caret-right pointer"></i></a>
+									{{/}}
+									{{^ycollapsed[m]}}
+									<a on-tap="foldRows:{{m}}"><i class="fa fa-caret-down pointer"></i></a>
+									{{/}}
+								</div>
+								</div>
+								
+							{{/}}
+							
+							</div>
+						</td>
+						{{#xaxis:n}}
+							<td on-tap="click:{{m}},{{n}}" title="{{m}}:{{n}}={{values[m][n]}}" align="center" on-mouseenter="cellIn" on-mouseleave="cellOut">
+								<div style="position:relative;">
+							{{^values[m][n]}}<i class="fa fa-square-o"></i>{{/}}
+							{{#values[m][n]:k}} 
+								{{^values[m][n][k]}}<i class="fa fa-square-o"></i>{{/}}
+								{{#values[m][n][k]}}
+									{{#typeof defaultitem=="boolean"}}
+										<i class="fa fa-check-square-o"></i>
+									{{/}}
+									{{#typeof defaultitem=="number"}}n{{.}}{{/}}
+									{{#typeof defaultitem=="string"}}s{{.}}{{/}}
+									{{#defaultitem instanceof Array}}a
+										{{values[m][n][k]}}
+									{{/}}
+									{{^defaultitem instanceof Array}}
+										{{#typeof defaultitem=="object"}}<i class="fa fa-pencil-square-o"></i>{{/}}
+									{{/}}
+									
+								
+								{{/}}
+							{{/}}
+								</div>
+							</td>
+						{{/}}
+					</tr>
+				{{/}}
+				{{/}}
+
+				</tbody>
+				</table>
+				{{#allow.addRow}}
+				<span class="pull-left"><input type="text" value="{{newRowLabel}}"/> <a on-tap="addRow"><i class="fa fa-plus"></i></a></span>
+				{{/}}				
+				
+				</div>
+				{{#showDetailView}}
+				<div class="col-md-4">
+					<div class="panel panel-default">
+						<div class="panel-heading">{{current.row}}:{{current.col}}<span class="pull-right">{{#allow.multiplevalues}}<a on-tap="addValue"><i class="fa fa-plus"></i></a>{{/}}</span></div>
+						<div class="panel-body">
+														
+						</div>
+						
+				
+						<ul class="list-group">
+						{{#item:i}}
+							<li class="list-group-item">
+							<span class="pull-right">
+							
+							{{#allow.multiplevalues}}<a on-tap="removeValue:{{i}}"><i class="fa fa-minus-square"></i></a>{{/}}
+							</span>
+
+							{{#typeof defaultitem=="string"}}<input type="text" value="{{item[i]}}" on-change-blur-enter='submitvalue'>{{/}}
+							{{#typeof defaultitem=="number"}}<input type="number" value="{{item[i]}}" on-change-blur-enter='submitvalue'>{{/}}
+							{{#typeof defaultitem=="boolean"}}
+								{{#item[i]}}<i class="fa fa-toggle-on fa-2x" on-tap="toggle:{{item[i]}}"></i>{{/}}
+								{{^item[i]}}<i class="fa fa-toggle-off fa-2x" on-tap="toggle:{{item[i]}}"></i>{{/}}
+							{{/}}
+							{{#defaultitem instanceof Array}}
+								<select value="{{item[i]}}" on-change='submitvalue'>
+								<option value=""></option>
+								{{#defaultitem:d}}
+								<option value="{{defaultitem[d]}}">{{defaultitem[d]}}</option>
+								{{/}}
+								</select>
+							{{/}}
+							{{^defaultitem instanceof Array}}
+								{{#typeof defaultitem=="object"}}
+									<form class="form-horizontal" role="form">
+									{{#this:v}}
+									
+									  <div class="form-group">
+										<label for="prop{{v}}" class="col-sm-2 control-label">{{v}}</label>
+										<div class="col-sm-10">
+										  <input type="text" class="form-control" id="prop{{v}}" placeholder="{{v}}" value="{{this}}" on-blur-enter='submitvalue'>
+										</div>
+									  </div>								
+
+									{{/}}
+									</form>
+								{{/}}
+							{{/}}							
+
+							</li>
+						{{/}}
+						</ul>						
+					
+					</div>						
+
+				</div>
+				{{/}}
+			</div>
+			
+			
+			<div class="row">
+				<div class="col-md-12">
+					<div class="panel panel-default">
+						<div class="panel-heading" on-tap="toggle('showAdmin')">Administration</div>
+						<div class="panel-body">
+						{{#showAdmin}}
+							<button on-tap="clearlocalStorage">Nuke'em</button>
+							<button on-tap="clearlocalStorage">clear values</button>
+							<br>
+							<input type="checkbox" checked="{{allow.addRow}}">allow adding rows
+							<br>
+							<input type="checkbox" checked="{{allow.addCol}}">allow add columns
+							<br>
+							<input type="checkbox" checked="{{allow.multiplevalues}}">allow multiple values in a cell
+							<br>	
+							<input type="checkbox" checked="{{singleChoice}}"> allow only one cell to be checked if cell value is boolean
+							<br>
+							default value:
+							value:{{defaultitem}} type:{{typeof defaultitem}}
+							<ul class="list-group">
+								<li class="list-group-item">
+									<div >
+										<button on-tap="setDefaultValue:boolean">boolean</button>
+										
+										{{#typeof defaultitem=="boolean"}}
+											{{#defaultitem}}<i class="fa fa-toggle-on fa-2x" on-click='toggle("defaultitem")' ></i>{{/}}
+											{{^defaultitem}}<i class="fa fa-toggle-off fa-2x" on-click='toggle("defaultitem")' ></i>{{/}}
+										{{/}}
+										
+									</div>
+								</li>
+								<li class="list-group-item">
+									<div >
+										<button on-tap="setDefaultValue:number">number</button>
+										{{#typeof defaultitem=="number"}}
+										<input type="number" value="{{defaultitem}}" min="0" max="65565">
+										{{/}}
+									</div>								
+								</li>
+								<li class="list-group-item">
+									<div >
+										<button on-tap="setDefaultValue:string">string</button>
+										{{#typeof defaultitem=="string"}}
+										<input type="text" value="{{defaultitem}}">
+										{{/}}
+									</div>								
+								</li>
+								<li class="list-group-item">
+									<div >
+										<button on-tap="setDefaultValue:array">valuerange</button>
+										{{#defaultitem instanceof Array}}
+											<select>
+											{{#defaultitem:d}}
+												<option value="{{defaultitem[d]}}">{{defaultitem[d]}}</option>
+											{{/}}
+											</select>
+										{{/}}
+										<i class="fa fa-plus" on-tap="push( 'defaultitem', 'new' )"></i>
+										
+										
+									</div>								
+								</li>
+								<li class="list-group-item">
+									<div >
+										<button on-tap="setDefaultValue:object">multiple values</button>
+										{{^defaultitem instanceof Array}}
+											{{#typeof defaultitem=="object"}}
+
+												{{#defaultitem:d}}
+													<div class="input-group">
+													  <span class="input-group-addon">{{d}}</span>
+													  <input type="text" class="form-control" placeholder="{{defaultitem[d]}}">
+													</div>											
+												{{/}}
+												add new property:<br>
+												<div class="input-group">
+												  <input type="text" class="form-control" value="{{newProp}}" placeholder="new property">
+												  <span class="input-group-btn">
+													<button class="btn btn-default" on-tap="addProperty:defaultitem.{{newProp}}" type="button">Add</button>
+												  </span>
+												</div>
+									
+												{{#this:v}}
+												
+												
+
+												{{/}}
+											{{/}}																
+										{{/}}									
+									</div>								
+								</li>								
+							</ul>
+						{{/}}
+						</div>
+
+					</div>
+				</div>
+			</div>
+			
+		</div>
+
+	</script>
+	
+	
+	<div id="content"></div>
+	
+
+	<script>
+
+	var App=Ractive.extend({
+		el:'#content',
+		template:'#cmls_app',
+		data:{
+			values:[[]],
+			xaxis:["abc","def","ghi","jkl"],
+			yaxis:["qwe","tzu","iop","fghgf"],
+			allow:{
+				addRow:true,
+				addCol:true,
+				multiplevalues:true
+			},
+			//defaultitem:true,
+			//defaultitem:3,
+			//defaultitem:'farbe',
+			//defaultitem:['farbe','size'],
+			defaultitem:{farbe:"",value:""},
+			
+			singleChoice:false
+		},
+		savelocal:function (){
+			localStorage.setItem('values', JSON.stringify(this.get('values')));
+			localStorage.setItem('xaxis', JSON.stringify(this.get('xaxis')));
+			localStorage.setItem('yaxis', JSON.stringify(this.get('yaxis')));
+			localStorage.setItem('allow', JSON.stringify(this.get('allow')));
+		},
+		getlocal:function(){
+			this.set('values',JSON.parse(localStorage.getItem('values')?localStorage.getItem('values'):'[[]]'));
+			this.set('xaxis',JSON.parse(localStorage.getItem('xaxis')?localStorage.getItem('xaxis'):'[]'));
+			this.set('yaxis',JSON.parse(localStorage.getItem('yaxis')?localStorage.getItem('yaxis'):'[]'));
+			this.set('allow',JSON.parse(localStorage.getItem('allow')?localStorage.getItem('allow'):'{"addRow":true,"addCol":true}'));		
+		},
+		clearlocal:function(){
+			localStorage.clear();
+			this.getlocal();
+		},
+		isArray: function( obj ) {
+			return toString.call(obj) === "[object Array]";
+		},
+			
+			
+
+		
+	});
+	
+	var app= new App;
+	
+	app.getlocal();
+	app.observe('defaultitem',function(newValue, oldValue, keypath){
+		if (typeof this.get('defaultitem')=="boolean" ){
+			this.set('showDetailView',false);
+		} else {
+			this.set('showDetailView',true);
+		}
+		console.log(keypath+' observed:'+newValue);
+	});
+	
+		
+	app.on({
+		textareaResize:function(event){
+			console.log(event.node);
+		},
+	  'rowIn':function(event){
+		this.set( 'edit.'+event.keypath , true );
+		this.set('yaxis.'+event.index.m,this.get('yaxis.'+event.index.m).replace(/&nbsp;/g, ' ').replace(/<br.*?>/g, '\n'));
+		//console.log($("#text-"+event.index.m).css.height);
+	  },
+	  'rowOut':function(event){
+		this.set( 'edit.'+event.keypath , false );
+		console.log(event.index.m);
+		//{{yaxis[m]}}
+		this.set('yaxis.'+event.index.m,this.get('yaxis.'+event.index.m).replace(/\r?\n/g, '<br />'));
+		this.savelocal();
+	  },
+	  colIn:function(event){
+		this.set( 'edit.'+event.keypath , true );
+	  },
+	  colOut:function(event){
+		this.set( 'edit.'+event.keypath , false );
+	  },
+	  click: function ( event, row,col ) {
+			this.set('current.row',row);
+			this.set('current.col',col);
+
+			var value=this.get('values.'+row+'.'+col);
+			var defaultitem=this.get('defaultitem');
+console.log(typeof value);
+			if (typeof value=='undefined'){
+				value=[];
+				if(this.isArray(defaultitem)){
+					console.log("isArray");
+					value.push('');
+				}
+				else {
+					console.log("isNOTarray");
+					value.push(this.get('defaultitem'));
+				}
+				
+				this.set('values.'+row+'.'+col,value);
+				
+			}
+			
+
+			
+			this.set('item',value);	
+			if (typeof this.get('defaultitem')=="boolean"){
+				if(this.get('singleChoice')==true){
+					var that=this;
+					$.each(this.get('values.'+row),function(k,v){
+						that.set('values.'+row+'.'+k,false);
+					});
+					this.set('values.'+row+'.'+col+'.0',true);				
+				}
+				else {
+					this.set('values.'+row+'.'+col+'.0',this.get('values.'+row+'.'+col+'.0')?false:true);
+				}
+
+			}
+			else {
+				this.set('values.'+row+'.'+col,value);
+			}	
+
+
+			
+			this.savelocal();			
+
+	  },
+	  addRow: function(event){
+		var array=this.get('yaxis');
+		array.push(this.get('newRowLabel'));
+		this.set('yaxis',array);
+		this.set('newRowLabel',"");
+		this.set('addRowInput',false);
+		this.savelocal();
+	  },
+	  insertRow:function(event,row){
+		var yRows=this.get('yaxis');
+		yRows.splice(row+1, 0, "");
+	  },
+	  removeRow:function(event,rownumber){
+		var yaxis=this.get('yaxis');
+		yaxis=yaxis.splice( rownumber,1);	  
+		
+		var values=this.get('values');
+		values.splice(rownumber,1);
+		this.set('edit.yaxis.'+rownumber,false);
+		this.savelocal();
+	  },
+	  indentRow:function(event,row){
+		var indentdepth=this.get('yindent.'+row)?this.get('yindent.'+row):[];
+		if(row==0){indentdepth=[];}
+		else {
+			// max indent is indent of row above 
+			var upperRow=this.get('yindent.'+(row-1))?this.get('yindent.'+(row-1)):[];		
+			if(indentdepth.length<=upperRow.length){
+				indentdepth.push("");
+				this.set('yindent.'+row,indentdepth);
+				console.log(indentdepth);
+				// indent all child elements
+				var yElements=this.get('yaxis');
+				var yMaxRows=yElements.length-1;
+
+				for(var i=row+1;i<=yMaxRows;i++){
+					var childindent=this.get('yindent.'+i)?this.get('yindent.'+i):[];
+					console.log("row:"+i+" parentindent:"+indentdepth.length+" thisindent:"+childindent.length);
+					if(childindent.length>=indentdepth.length){
+						childindent.push("");
+						this.set('yindent.'+i,childindent);
+					} 
+					console.log(i);
+				}				
+			}
+			
+		}
+
+	  },
+	  outdentRow:function(event,row){
+		var indentdepth=this.get('yindent.'+row)?this.get('yindent.'+row):[];
+		if(indentdepth.length>0){
+			indentdepth.pop();
+			this.set('yindent.'+row,indentdepth);
+				
+				
+				// outdent all child elements
+				var yElements=this.get('yaxis');
+				var yMaxRows=yElements.length-1;
+
+				for(var i=row+1;i<=yMaxRows;i++){
+					var childindent=this.get('yindent.'+i)?this.get('yindent.'+i):[];
+					console.log("row:"+i+" parentindent:"+indentdepth.length+" thisindent:"+childindent.length);
+					if(childindent.length>indentdepth.length+1){
+						childindent.pop();
+						this.set('yindent.'+i,childindent);
+					} else {i=yMaxRows+1;}
+					console.log(i);
+				}			
+		}
+	  },
+	  foldRows:function(event,row){
+		console.log("fold:"+row);
+		var yRows=this.get('yaxis');
+		var indentdepth=this.get('yindent.'+row)?this.get('yindent.'+row):[];
+		for(var i=row+1;i<=yRows.length-1;i++){
+			var childindent=this.get('yindent.'+i)?this.get('yindent.'+i):[];
+			if(childindent.length>indentdepth.length){
+				this.set('yhide.'+i,true);
+			}
+			else {i=yRows.length+2;}
+		}
+		this.set('ycollapsed.'+row,true);
+		
+	  },
+	  unfoldRows:function(event,row){
+		console.log("fold:"+row);
+		var yRows=this.get('yaxis');
+		var indentdepth=this.get('yindent.'+row)?this.get('yindent.'+row):[];
+		for(var i=row+1;i<=yRows.length-1;i++){
+			var childindent=this.get('yindent.'+i)?this.get('yindent.'+i):[];
+			if(childindent.length>indentdepth.length){
+				this.set('yhide.'+i,false);
+			}
+			else {i=yRows.length+2;}
+		}
+		this.set('ycollapsed.'+row,false);	  
+	  },
+	  addCol: function(event){
+		var array=this.get('xaxis');
+		array.push(this.get('newColLabel'));
+		this.set('xaxis',array);
+		this.set('newColLabel',"");
+		this.set('addColInput',false);
+		this.savelocal();
+	  },
+	  removeCol:function(event,colnumber){
+		//remove header
+		var xaxis=this.get('xaxis');
+		xaxis=xaxis.splice( colnumber,1);
+		//this.set('xaxis',xaxis);
+		
+		// remove values
+		var values=this.get('values');
+		var newValues=[];
+		$.each(values,function(k,v){
+			v.splice(colnumber,1);
+			newValues.push(v);
+		});
+		this.set('values',newValues);
+		this.set('edit.xaxis.'+colnumber,false);
+		this.savelocal();
+		
+	  },
+	  addValue:function(event){
+		var allow= this.get('allow.multiplevalues');
+		if (allow){
+			var row=this.get('current.row');
+			var col=this.get('current.col');
+			var value=this.get('values.'+row+'.'+col);
+			if (typeof value=='undefined'){
+				value=[];
+			}
+			if($.isArray(value)){
+				value.push(this.get('defaultitem'));
+			}
+			else {
+				var noarray=value;
+				value=[];
+				value.push(noarray);
+				value.push(this.get('defaultitem'));
+			}
+
+			this.set('values.'+row+'.'+col,value);
+			this.set('item',value);
+			this.savelocal();
+		}
+	  },
+	  removeValue:function(event,item){
+		var v=this.get('values.'+this.get('current.row')+'.'+this.get('current.col'));
+		v.splice(item,1);
+		console.log(v+':'+item);
+		this.set('values.'+this.get('current.row')+'.'+this.get('current.col'),v)
+	  },
+	  showAddRow:function(event){
+		this.set('addRowInput',this.get('addRowInput')?false:true);
+	  },
+	  editRowLabel:function(event){
+		console.log(  'edit.'+event.keypath);
+		 this.set( 'edit.'+event.keypath , true );
+	  },
+	  submit: function ( event ) {
+		this.set( 'edit.'+event.keypath, false );
+		this.savelocal();
+	  },
+	  clearlocalStorage:function(event) {
+		this.clearlocal();
+	  },
+	  submitvalue:function(event){
+		var row = this.get('current.row');
+		var col = this.get('current.col');
+		//var value= this.get('values.'+row+'.'+col);
+
+		var item = this.get('item');
+		//this.set('values.'+row+'.'+col,value);
+		//this.set('item',value);
+this.set(event.keypath,event.node.value);		
+		console.log(this.get('item'));
+		console.log(event.keypath);
+		console.log(event.node.value);
+		this.update( 'values' ); 
+		this.update( 'item' ); 		
+		this.savelocal();
+	  },
+	  toggle:function(event,item){
+	  console.log(event.keypath+':'+item);
+		this.set(event.keypath,this.get(event.keypath)?false:true);
+		this.update('values');
+	  },
+	  setDefaultValue:function(event,value){
+		console.log(value);
+		switch(value) {
+			case "boolean":
+				this.set('defaultitem',true);
+				break;
+			case "number":
+				this.set('defaultitem',0);
+				break;
+			case "string":
+				this.set('defaultitem',"");
+				break;
+			case "array":
+				this.set('defaultitem',[]);
+				break;
+			case "object":
+				this.set('defaultitem',{});
+				break;				
+			default:
+
+		} 		
+		
+	  },
+	  addProperty:function(event,property){
+		console.log(event.keypath+':'+property);
+		this.set(property,'');
+	  }
+
+
+	});
+
+
+
+
+
+
+
+	
+
+	
+	$(function(){
+	
+	//localStorage.setItem('key', 'value');
+	//alert(localStorage.getItem('key'));
+
+ 	
+		
+
+		
+		
+		
+		
+	});
+	
+	</script>
+	</body>
+</html>
